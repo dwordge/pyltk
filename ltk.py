@@ -9,7 +9,7 @@ header = '''\
 #! /usr/bin/python
 
 import struct
-
+from types import *
 
 class LLRPError(Exception):
     def __str__(self, message = ""):
@@ -67,8 +67,15 @@ def llrp_data2xml(msg):
         ans += __llrp_data2xml(msg[p], p)
     return ans[: -1]
 
+def reverse_Message_struct():
+    for m in Message_struct:
+        i=Message_struct[m]['type']
+        Message_Type2Name[i]=m
+
+
 Message_struct = {}
 Parameter_struct = {}
+Message_Type2Name = {}
 
 
 '''
@@ -216,7 +223,7 @@ def decodeNormalArrayFieldOfList(elementList):
     typeList = ['u8v', 's8v', 'u16v', 's16v', 'u32v', 's32v',
                 'u64v', 's64v', 'utf8v', 'bytesToEnd', 'u96', 'u2']
     packStrList = ['!B', '!b', '!H', '!h', '!I',
-                   '!i', '!Q', '!q', '!B', '!s', '!s', '!s']
+                   '!i', '!Q', '!q', '!s', '!s', '!s', '!s']
     name = elementList[0].getAttribute("name")
     typeName = elementList[0].getAttribute("type")
     packStr = packStrList[typeList.index(typeName)]
@@ -335,7 +342,7 @@ def MessageStructDefs(messageDefList):
     for msgDef in messageDefList:
         s += "Message_struct['" + msgDef.getAttribute("name") + "'] = {\n"
         s += "    'type' :  " + msgDef.getAttribute("typeNum") + ",\n"
-        s += "    'fields':  [ 'deviceSN', 'Ver', 'Type', 'ID',  \n    "
+        s += "    'fields':  [ 'Rsvd', 'Ver', 'Type', 'ID',  \n    "
         elementList = elementOfChildNodes(msgDef.childNodes)
         for element in elementList:
             if element.tagName == 'field':
@@ -408,7 +415,7 @@ def encodeNormalArrayFieldOfList(elementList):
     typeList = ['u8v', 's8v', 'u16v', 's16v', 'u32v', 's32v',
                 'u64v', 's64v', 'utf8v', 'u96', 'bytesToEnd', 'u2']
     packStrList = ['!B', '!b', '!H', '!h', '!I',
-                   '!i', '!Q', '!q', '!B', '!s', '!s', '!s']
+                   '!i', '!Q', '!q', '!s', '!s', '!s', '!s']
     typeName = elementList[0].getAttribute("type")
     packStr = packStrList[typeList.index(typeName)]
     result = elementList[0].getAttribute(
@@ -416,7 +423,10 @@ def encodeNormalArrayFieldOfList(elementList):
     result += "data += struct.pack('!H', len(" + \
         elementList[0].getAttribute("name") + "))\n    "
     result += "for x in " + elementList[0].getAttribute("name") + ":\n        "
-    result += "data += struct.pack('" + packStr + "', x)\n\n    "
+    if not elementList[0].getAttribute("enumeration"):
+        result += "data += struct.pack('" + packStr + "', x)\n\n    "
+    else:
+        result += "data += struct.pack('" + packStr + "', " + elementList[0].getAttribute("enumeration") +"_Name2Type[x])\n\n    "
     return result, elementList[1:]
 
 
@@ -542,6 +552,60 @@ def DecodeMessageFuncs(msgDefList):
     return s
 
 
+
+def MessageClassDefs(paraDefList):
+    s = ""
+    for paraDef in paraDefList:
+        s += "class " + paraDef.getAttribute("name") + "(LLRPMessage):\n"
+        s += "    def __init__(self):\n"
+        s += "        self['" + paraDef.getAttribute("name") + "'] = {}\n"
+        s += "        self['" + paraDef.getAttribute("name") + "']['Type'] = " + paraDef.getAttribute("typeNum") + "\n"
+        s += "        self['" + paraDef.getAttribute("name") + "']['ID'] = 1\n"
+
+        s += "\n\n"
+    return s
+
+
+
+extra_func = '''
+
+VER_PROTO_V1_1 = 2 
+
+reverse_Message_struct()
+
+def encode_message(msg):
+    key = msg.keys()
+    if (len(key) != 1):
+        raise LLRPError('invalid message format')
+    name = key[0]
+    
+    if name not in Message_struct:
+        raise LLRPError('invalid message %s' % name)
+
+    data = Message_struct[name]['encode'](msg[name])
+    message_type = (VER_PROTO_V1_1<<10) | msg[name]['Type']
+    message_length = len(data) + 10
+    message_id = msg[name]['ID']
+    message_header = struct.pack("!HII", message_type, message_length, message_id)
+    return message_header + data 
+
+def decode_message(msg_data):
+    msg_type, msg_length, msg_id = struct.unpack("!HII", msg_data[0:10])
+    msg_type = msg_type & 0x03ff
+    try:
+        msg_name = Message_Type2Name[msg_type]
+    except KeyError:
+        raise LLRPError('message type %d is not supported' % type)
+    parameters = Message_struct[msg_name]['decode'](msg_data[10 : msg_length])
+    msg = LLRPMessage()
+    msg[msg_name] = parameters
+    msg[msg_name]['Ver'] = VER_PROTO_V1_1
+    msg[msg_name]['Type'] = msg_type
+    msg[msg_name]['ID'] = msg_id
+    return msg
+
+'''
+
 def xml2py(XMLName):
     mydom = parse(XMLName)
     root = mydom.documentElement
@@ -558,8 +622,10 @@ def xml2py(XMLName):
     messageEncoderFuncs = EncodeMessageFuncs(messageDefinition)
     parameterDecodeFuncs = DecodeParameterFuncs(parameterDefinition)
     messageDecodeFuncs = DecodeMessageFuncs(messageDefinition)
-    return header + enumeration + parameter + message + parameterEncoderFuncs + messageEncoderFuncs +\
-        parameterDecodeFuncs + messageDecodeFuncs
+    message_class_defs = MessageClassDefs(messageDefinition)
+    return header + enumeration + parameterEncoderFuncs + messageEncoderFuncs +\
+        parameterDecodeFuncs + messageDecodeFuncs + parameter + message + \
+        message_class_defs + extra_func
 
 
 def main():
@@ -567,10 +633,10 @@ def main():
     parser.add_argument("-f", "--file", required=False,
                         default="llrp-1x0-def.xml", help="ltk def XML file name")
     parser.add_argument("-o", "--output", required=False,
-                        default="ltk_codec.py", help="")
+                        default="llrp_codec.py", help="")
     args = parser.parse_args()
     output_str = xml2py(args.file)
-    with open("ltk_codec.py", "w") as f:
+    with open(args.output, "w") as f:
         f.write(output_str)
 
 
