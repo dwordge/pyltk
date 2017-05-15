@@ -98,10 +98,49 @@ class LLRPCodecTestCases(unittest.TestCase):
         self.assertEqual(msg['ADD_ROSPEC']['ROSpec']['ROBoundarySpec']['ROSpecStopTrigger']['ROSpecStopTriggerType'], 'Duration')
         self.assertEqual(msg['ADD_ROSPEC']['ROSpec']['ROBoundarySpec']['ROSpecStopTrigger']['DurationTriggerValue'], 32)
 
+    def test_RO_ACCESS_REPORT(self):
+        msg = RO_ACCESS_REPORT()
+        msg['RO_ACCESS_REPORT']['ID'] = 100
+        msg['RO_ACCESS_REPORT']['TagReportData'] = []
+        tagReprt ={}
+        tagReprt['EPCData'] = {}
+        tagReprt['EPCData']['EPC'] = {}
+        tagReprt['EPCData']['EPC']["BitLen"] = 64 #EPCLengthBits: Number of bits in the EPC
+        tagReprt['EPCData']['EPC']["Data"] = '\xff\xff\xff\xff\xff\xff\xff\xff'
+        tagReprt['ROSpecID'] = {}
+        tagReprt['ROSpecID']['ROSpecID'] = 1
+        tagReprt['SpecIndex'] = {}
+        tagReprt['SpecIndex']['SpecIndex'] = 1
+        tagReprt['AntennaID'] = {}
+        tagReprt['AntennaID']['AntennaID'] = 1
+        tagReprt['PeakRSSI'] = {}
+        tagReprt['PeakRSSI']['PeakRSSI'] = -83
+        tagReprt['ChannelIndex'] = {}
+        tagReprt['ChannelIndex']['ChannelIndex'] = 1
+        tagReprt['C1G2ReadOpSpecResult'] = []
+        C1G2ReadOpSpecResult1 = {}
+        C1G2ReadOpSpecResult1['Result'] = 'Success'
+        C1G2ReadOpSpecResult1['OpSpecID'] = 1 
+        C1G2ReadOpSpecResult1['ReadData'] = [1,2,3,4]
+        tagReprt['C1G2ReadOpSpecResult'].append(C1G2ReadOpSpecResult1)
+        tagReprt['C1G2WriteOpSpecResult'] = []
+        C1G2WriteOpSpecResult1 = {}
+        C1G2WriteOpSpecResult1['Result'] = 'Success'
+        C1G2WriteOpSpecResult1['OpSpecID'] = 1 
+        C1G2WriteOpSpecResult1['NumWordsWritten'] = 2
+        tagReprt['C1G2WriteOpSpecResult'].append(C1G2WriteOpSpecResult1)
+        msg['RO_ACCESS_REPORT']['TagReportData'].append(tagReprt)
+        data = encode_message(msg)
+        print binascii.hexlify(data)
+        #msg = decode_message(data)
+        #print msg
+
+
 
 if __name__ == '__main__':
     suite = unittest.TestSuite()
     #suite.addTest(LLRPCodecTestCases('test_GET_READER_CAPABILITIES'))
     #suite.addTest(LLRPCodecTestCases('test_GET_READER_CAPABILITIES_RESPONSE'))
-    suite.addTest(LLRPCodecTestCases('test_ADD_ROSPEC'))
+    #suite.addTest(LLRPCodecTestCases('test_ADD_ROSPEC'))
+    suite.addTest(LLRPCodecTestCases('test_RO_ACCESS_REPORT'))
     unittest.TextTestRunner().run(suite)
