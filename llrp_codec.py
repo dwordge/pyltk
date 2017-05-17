@@ -1054,97 +1054,80 @@ def encode_EPCData(par):
 
 def encode_EPC_96(par):
     data = ''
-    EPC = par["EPC"]
-    data += struct.pack('!H', len(EPC))
-    for x in EPC:
-        data += struct.pack('!s', x)
-
-    type = Parameter_struct['EPC_96']['type']
-    data = struct.pack('!HH', type, (4+len(data))) + data
+    data += chr(141)
+    data += par['EPC']
     return data
 
 def encode_ROSpecID(par):
     data = ''
-    data += struct.pack("!I", par["ROSpecID"])
-    type = Parameter_struct['ROSpecID']['type']
-    data = struct.pack('!HH', type, (4+len(data))) + data
+    data += chr(137)
+    data += struct.pack('!I', par['ROSpecID'])
     return data
 
 def encode_SpecIndex(par):
     data = ''
-    data += struct.pack("!H", par["SpecIndex"])
-    type = Parameter_struct['SpecIndex']['type']
-    data = struct.pack('!HH', type, (4+len(data))) + data
+    data += chr(142)
+    data += struct.pack('!H', par['SpecIndex'])
     return data
 
 def encode_InventoryParameterSpecID(par):
     data = ''
-    data += struct.pack("!H", par["InventoryParameterSpecID"])
-    type = Parameter_struct['InventoryParameterSpecID']['type']
-    data = struct.pack('!HH', type, (4+len(data))) + data
+    data += chr(138)
+    data += struct.pack('!H', par['InventoryParameterSpecID'])
     return data
 
 def encode_AntennaID(par):
     data = ''
-    data += struct.pack("!H", par["AntennaID"])
-    type = Parameter_struct['AntennaID']['type']
-    data = struct.pack('!HH', type, (4+len(data))) + data
+    data += chr(129)
+    data += struct.pack('!H', par['AntennaID'])
     return data
 
 def encode_PeakRSSI(par):
     data = ''
-    data += struct.pack("!b", par["PeakRSSI"])
-    type = Parameter_struct['PeakRSSI']['type']
-    data = struct.pack('!HH', type, (4+len(data))) + data
+    data += chr(134)
+    data += struct.pack('!b', par['PeakRSSI'])
     return data
 
 def encode_ChannelIndex(par):
     data = ''
-    data += struct.pack("!H", par["ChannelIndex"])
-    type = Parameter_struct['ChannelIndex']['type']
-    data = struct.pack('!HH', type, (4+len(data))) + data
+    data += chr(135)
+    data += struct.pack('!H', par['ChannelIndex'])
     return data
 
 def encode_FirstSeenTimestampUTC(par):
     data = ''
-    data += struct.pack("!Q", par["Microseconds"])
-    type = Parameter_struct['FirstSeenTimestampUTC']['type']
-    data = struct.pack('!HH', type, (4+len(data))) + data
+    data += chr(130)
+    data += struct.pack('!Q', par['Microseconds'])
     return data
 
 def encode_FirstSeenTimestampUptime(par):
     data = ''
-    data += struct.pack("!Q", par["Microseconds"])
-    type = Parameter_struct['FirstSeenTimestampUptime']['type']
-    data = struct.pack('!HH', type, (4+len(data))) + data
+    data += chr(131)
+    data += struct.pack('!Q', par['Microseconds'])
     return data
 
 def encode_LastSeenTimestampUTC(par):
     data = ''
-    data += struct.pack("!Q", par["Microseconds"])
-    type = Parameter_struct['LastSeenTimestampUTC']['type']
-    data = struct.pack('!HH', type, (4+len(data))) + data
+    data += chr(132)
+    data += struct.pack('!Q', par['Microseconds'])
     return data
 
 def encode_LastSeenTimestampUptime(par):
     data = ''
-    data += struct.pack("!Q", par["Microseconds"])
-    type = Parameter_struct['LastSeenTimestampUptime']['type']
-    data = struct.pack('!HH', type, (4+len(data))) + data
+    data += chr(133)
+    data += struct.pack('!Q', par['Microseconds'])
     return data
 
 def encode_TagSeenCount(par):
     data = ''
-    data += struct.pack("!H", par["TagCount"])
-    type = Parameter_struct['TagSeenCount']['type']
-    data = struct.pack('!HH', type, (4+len(data))) + data
+    data += chr(136)
+    data += struct.pack('!H', par['TagCount'])
     return data
 
 def encode_AccessSpecID(par):
     data = ''
-    data += struct.pack("!I", par["AccessSpecID"])
-    type = Parameter_struct['AccessSpecID']['type']
-    data = struct.pack('!HH', type, (4+len(data))) + data
+    data += chr(144)
+    data += struct.pack('!I', par['AccessSpecID'])
     return data
 
 def encode_RFSurveyReportData(par):
@@ -1295,9 +1278,8 @@ def encode_ReaderExceptionEvent(par):
 
 def encode_OpSpecID(par):
     data = ''
-    data += struct.pack("!H", par["OpSpecID"])
-    type = Parameter_struct['OpSpecID']['type']
-    data = struct.pack('!HH', type, (4+len(data))) + data
+    data += chr(145)
+    data += struct.pack('!H', par['OpSpecID'])
     return data
 
 def encode_RFSurveyEvent(par):
@@ -1431,11 +1413,8 @@ def encode_C1G2InventoryCommand(par):
 
 def encode_C1G2Filter(par):
     data = ''
-    T = par["T"]
-    data += struct.pack('!H', len(T))
-    for x in T:
-        data += struct.pack('!s', C1G2TruncateAction_Name2Type[x])
-
+    e = C1G2TruncateAction_Name2Type[par["T"]]<<6|0
+    data += struct.pack("!B", e)
     data += encode("C1G2TagInventoryMask")(par["C1G2TagInventoryMask"])
     if par.has_key("C1G2TagInventoryStateAwareFilterAction"):
         data += encode("C1G2TagInventoryStateAwareFilterAction")(par["C1G2TagInventoryStateAwareFilterAction"])
@@ -1447,11 +1426,8 @@ def encode_C1G2Filter(par):
 
 def encode_C1G2TagInventoryMask(par):
     data = ''
-    MB = par["MB"]
-    data += struct.pack('!H', len(MB))
-    for x in MB:
-        data += struct.pack('!s', x)
-
+    e = par["MB"]<<6|0
+    data += struct.pack("!B", e)
     data += struct.pack("!H", par["Pointer"])
     data += struct.pack("!H", par["TagMask"]["BitLen"])
     data += par['TagMask']['Data']
@@ -1484,11 +1460,8 @@ def encode_C1G2RFControl(par):
 
 def encode_C1G2SingulationControl(par):
     data = ''
-    Session = par["Session"]
-    data += struct.pack('!H', len(Session))
-    for x in Session:
-        data += struct.pack('!s', x)
-
+    e = par["Session"]<<6|0
+    data += struct.pack("!B", e)
     data += struct.pack("!H", par["TagPopulation"])
     data += struct.pack("!I", par["TagTransitTime"])
     if par.has_key("C1G2TagInventoryStateAwareSingulationAction"):
@@ -1515,12 +1488,7 @@ def encode_C1G2TagSpec(par):
 
 def encode_C1G2TargetTag(par):
     data = ''
-    MB = par["MB"]
-    data += struct.pack('!H', len(MB))
-    for x in MB:
-        data += struct.pack('!s', x)
-
-    e = par["Match"]<<7|0
+    e = par["MB"]<<6|par["Match"]<<5|0
     data += struct.pack("!B", e)
     data += struct.pack("!H", par["Pointer"])
     data += struct.pack("!H", par["TagMask"]["BitLen"])
@@ -1535,11 +1503,8 @@ def encode_C1G2Read(par):
     data = ''
     data += struct.pack("!H", par["OpSpecID"])
     data += struct.pack("!I", par["AccessPassword"])
-    MB = par["MB"]
-    data += struct.pack('!H', len(MB))
-    for x in MB:
-        data += struct.pack('!s', x)
-
+    e = par["MB"]<<6|0
+    data += struct.pack("!B", e)
     data += struct.pack("!H", par["WordPointer"])
     data += struct.pack("!H", par["WordCount"])
     type = Parameter_struct['C1G2Read']['type']
@@ -1550,11 +1515,8 @@ def encode_C1G2Write(par):
     data = ''
     data += struct.pack("!H", par["OpSpecID"])
     data += struct.pack("!I", par["AccessPassword"])
-    MB = par["MB"]
-    data += struct.pack('!H', len(MB))
-    for x in MB:
-        data += struct.pack('!s', x)
-
+    e = par["MB"]<<6|0
+    data += struct.pack("!B", e)
     data += struct.pack("!H", par["WordPointer"])
     WriteData = par["WriteData"]
     data += struct.pack('!H', len(WriteData))
@@ -1595,11 +1557,8 @@ def encode_C1G2BlockErase(par):
     data = ''
     data += struct.pack("!H", par["OpSpecID"])
     data += struct.pack("!I", par["AccessPassword"])
-    MB = par["MB"]
-    data += struct.pack('!H', len(MB))
-    for x in MB:
-        data += struct.pack('!s', x)
-
+    e = par["MB"]<<6|0
+    data += struct.pack("!B", e)
     data += struct.pack("!H", par["WordPointer"])
     data += struct.pack("!H", par["WordCount"])
     type = Parameter_struct['C1G2BlockErase']['type']
@@ -1610,11 +1569,8 @@ def encode_C1G2BlockWrite(par):
     data = ''
     data += struct.pack("!H", par["OpSpecID"])
     data += struct.pack("!I", par["AccessPassword"])
-    MB = par["MB"]
-    data += struct.pack('!H', len(MB))
-    for x in MB:
-        data += struct.pack('!s', x)
-
+    e = par["MB"]<<6|0
+    data += struct.pack("!B", e)
     data += struct.pack("!H", par["WordPointer"])
     WriteData = par["WriteData"]
     data += struct.pack('!H', len(WriteData))
@@ -1635,24 +1591,21 @@ def encode_C1G2EPCMemorySelector(par):
 
 def encode_C1G2_PC(par):
     data = ''
-    data += struct.pack("!H", par["PC_Bits"])
-    type = Parameter_struct['C1G2_PC']['type']
-    data = struct.pack('!HH', type, (4+len(data))) + data
+    data += chr(140)
+    data += struct.pack('!H', par['PC_Bits'])
     return data
 
 def encode_C1G2_CRC(par):
     data = ''
-    data += struct.pack("!H", par["CRC"])
-    type = Parameter_struct['C1G2_CRC']['type']
-    data = struct.pack('!HH', type, (4+len(data))) + data
+    data += chr(139)
+    data += struct.pack('!H', par['CRC'])
     return data
 
 def encode_C1G2SingulationDetails(par):
     data = ''
-    data += struct.pack("!H", par["NumCollisionSlots"])
-    data += struct.pack("!H", par["NumEmptySlots"])
-    type = Parameter_struct['C1G2SingulationDetails']['type']
-    data = struct.pack('!HH', type, (4+len(data))) + data
+    data += chr(146)
+    data += struct.pack('!H', par['NumCollisionSlots'])
+    data += struct.pack('!H', par['NumEmptySlots'])
     return data
 
 def encode_C1G2ReadOpSpecResult(par):
@@ -3257,6 +3210,7 @@ def decode_EPCData(data):
 
     body = data[4:length]
     (bitArrayLen, ) = struct.unpack("!H", body[0:2])
+    par["EPC"] = {}
     par["EPC"]["BitLen"] = bitArrayLen
     body = body[2:]
     if (bitArrayLen%8) == 0:
@@ -3272,209 +3226,181 @@ def decode_EPC_96(data):
 
     if len(data) == 0:
         return None, data
-    type, length = struct.unpack("!HH", data[0:4])
-
-    if type != Parameter_struct["EPC_96"]["type"]:
-        return None, data
-
-    body = data[4:length]
-    (arrayLen, ) = struct.unpack("!H", body[0:2])
-    body = body[2:]
-    par["EPC"] = body[0:arrayLen*1]
-    body = body[arrayLen*1:]
-    return par, data[length:]
+    type = ord(data[0])&0x7f
+    if type != Parameter_struct['EPC_96']['type']:
+        return par, data
+    data = data[1:]
+    par['EPC'] = data[0:12]
+    data = data[12:]
+    return par, data
 
 def decode_ROSpecID(data):
     par = {}
 
     if len(data) == 0:
         return None, data
-    type, length = struct.unpack("!HH", data[0:4])
-
-    if type != Parameter_struct["ROSpecID"]["type"]:
-        return None, data
-
-    body = data[4:length]
-    (ROSpecID,) = struct.unpack("!I", body[0:4])
-    par["ROSpecID"] = ROSpecID
-    body = body[4:]
-    return par, data[length:]
+    type = ord(data[0])&0x7f
+    if type != Parameter_struct['ROSpecID']['type']:
+        return par, data
+    data = data[1:]
+    (ROSpecID,) = struct.unpack('!I',data[0:4])
+    par['ROSpecID'] = ROSpecID
+    data = data[4:]
+    return par, data
 
 def decode_SpecIndex(data):
     par = {}
 
     if len(data) == 0:
         return None, data
-    type, length = struct.unpack("!HH", data[0:4])
-
-    if type != Parameter_struct["SpecIndex"]["type"]:
-        return None, data
-
-    body = data[4:length]
-    (SpecIndex,) = struct.unpack("!H", body[0:2])
-    par["SpecIndex"] = SpecIndex
-    body = body[2:]
-    return par, data[length:]
+    type = ord(data[0])&0x7f
+    if type != Parameter_struct['SpecIndex']['type']:
+        return par, data
+    data = data[1:]
+    (SpecIndex,) = struct.unpack('!H',data[0:2])
+    par['SpecIndex'] = SpecIndex
+    data = data[2:]
+    return par, data
 
 def decode_InventoryParameterSpecID(data):
     par = {}
 
     if len(data) == 0:
         return None, data
-    type, length = struct.unpack("!HH", data[0:4])
-
-    if type != Parameter_struct["InventoryParameterSpecID"]["type"]:
-        return None, data
-
-    body = data[4:length]
-    (InventoryParameterSpecID,) = struct.unpack("!H", body[0:2])
-    par["InventoryParameterSpecID"] = InventoryParameterSpecID
-    body = body[2:]
-    return par, data[length:]
+    type = ord(data[0])&0x7f
+    if type != Parameter_struct['InventoryParameterSpecID']['type']:
+        return par, data
+    data = data[1:]
+    (InventoryParameterSpecID,) = struct.unpack('!H',data[0:2])
+    par['InventoryParameterSpecID'] = InventoryParameterSpecID
+    data = data[2:]
+    return par, data
 
 def decode_AntennaID(data):
     par = {}
 
     if len(data) == 0:
         return None, data
-    type, length = struct.unpack("!HH", data[0:4])
-
-    if type != Parameter_struct["AntennaID"]["type"]:
-        return None, data
-
-    body = data[4:length]
-    (AntennaID,) = struct.unpack("!H", body[0:2])
-    par["AntennaID"] = AntennaID
-    body = body[2:]
-    return par, data[length:]
+    type = ord(data[0])&0x7f
+    if type != Parameter_struct['AntennaID']['type']:
+        return par, data
+    data = data[1:]
+    (AntennaID,) = struct.unpack('!H',data[0:2])
+    par['AntennaID'] = AntennaID
+    data = data[2:]
+    return par, data
 
 def decode_PeakRSSI(data):
     par = {}
 
     if len(data) == 0:
         return None, data
-    type, length = struct.unpack("!HH", data[0:4])
-
-    if type != Parameter_struct["PeakRSSI"]["type"]:
-        return None, data
-
-    body = data[4:length]
-    (PeakRSSI,) = struct.unpack("!b", body[0:1])
-    par["PeakRSSI"] = PeakRSSI
-    body = body[1:]
-    return par, data[length:]
+    type = ord(data[0])&0x7f
+    if type != Parameter_struct['PeakRSSI']['type']:
+        return par, data
+    data = data[1:]
+    (PeakRSSI,) = struct.unpack('!b',data[0:1])
+    par['PeakRSSI'] = PeakRSSI
+    data = data[1:]
+    return par, data
 
 def decode_ChannelIndex(data):
     par = {}
 
     if len(data) == 0:
         return None, data
-    type, length = struct.unpack("!HH", data[0:4])
-
-    if type != Parameter_struct["ChannelIndex"]["type"]:
-        return None, data
-
-    body = data[4:length]
-    (ChannelIndex,) = struct.unpack("!H", body[0:2])
-    par["ChannelIndex"] = ChannelIndex
-    body = body[2:]
-    return par, data[length:]
+    type = ord(data[0])&0x7f
+    if type != Parameter_struct['ChannelIndex']['type']:
+        return par, data
+    data = data[1:]
+    (ChannelIndex,) = struct.unpack('!H',data[0:2])
+    par['ChannelIndex'] = ChannelIndex
+    data = data[2:]
+    return par, data
 
 def decode_FirstSeenTimestampUTC(data):
     par = {}
 
     if len(data) == 0:
         return None, data
-    type, length = struct.unpack("!HH", data[0:4])
-
-    if type != Parameter_struct["FirstSeenTimestampUTC"]["type"]:
-        return None, data
-
-    body = data[4:length]
-    (Microseconds,) = struct.unpack("!Q", body[0:8])
-    par["Microseconds"] = Microseconds
-    body = body[8:]
-    return par, data[length:]
+    type = ord(data[0])&0x7f
+    if type != Parameter_struct['FirstSeenTimestampUTC']['type']:
+        return par, data
+    data = data[1:]
+    (Microseconds,) = struct.unpack('!Q',data[0:8])
+    par['Microseconds'] = Microseconds
+    data = data[8:]
+    return par, data
 
 def decode_FirstSeenTimestampUptime(data):
     par = {}
 
     if len(data) == 0:
         return None, data
-    type, length = struct.unpack("!HH", data[0:4])
-
-    if type != Parameter_struct["FirstSeenTimestampUptime"]["type"]:
-        return None, data
-
-    body = data[4:length]
-    (Microseconds,) = struct.unpack("!Q", body[0:8])
-    par["Microseconds"] = Microseconds
-    body = body[8:]
-    return par, data[length:]
+    type = ord(data[0])&0x7f
+    if type != Parameter_struct['FirstSeenTimestampUptime']['type']:
+        return par, data
+    data = data[1:]
+    (Microseconds,) = struct.unpack('!Q',data[0:8])
+    par['Microseconds'] = Microseconds
+    data = data[8:]
+    return par, data
 
 def decode_LastSeenTimestampUTC(data):
     par = {}
 
     if len(data) == 0:
         return None, data
-    type, length = struct.unpack("!HH", data[0:4])
-
-    if type != Parameter_struct["LastSeenTimestampUTC"]["type"]:
-        return None, data
-
-    body = data[4:length]
-    (Microseconds,) = struct.unpack("!Q", body[0:8])
-    par["Microseconds"] = Microseconds
-    body = body[8:]
-    return par, data[length:]
+    type = ord(data[0])&0x7f
+    if type != Parameter_struct['LastSeenTimestampUTC']['type']:
+        return par, data
+    data = data[1:]
+    (Microseconds,) = struct.unpack('!Q',data[0:8])
+    par['Microseconds'] = Microseconds
+    data = data[8:]
+    return par, data
 
 def decode_LastSeenTimestampUptime(data):
     par = {}
 
     if len(data) == 0:
         return None, data
-    type, length = struct.unpack("!HH", data[0:4])
-
-    if type != Parameter_struct["LastSeenTimestampUptime"]["type"]:
-        return None, data
-
-    body = data[4:length]
-    (Microseconds,) = struct.unpack("!Q", body[0:8])
-    par["Microseconds"] = Microseconds
-    body = body[8:]
-    return par, data[length:]
+    type = ord(data[0])&0x7f
+    if type != Parameter_struct['LastSeenTimestampUptime']['type']:
+        return par, data
+    data = data[1:]
+    (Microseconds,) = struct.unpack('!Q',data[0:8])
+    par['Microseconds'] = Microseconds
+    data = data[8:]
+    return par, data
 
 def decode_TagSeenCount(data):
     par = {}
 
     if len(data) == 0:
         return None, data
-    type, length = struct.unpack("!HH", data[0:4])
-
-    if type != Parameter_struct["TagSeenCount"]["type"]:
-        return None, data
-
-    body = data[4:length]
-    (TagCount,) = struct.unpack("!H", body[0:2])
-    par["TagCount"] = TagCount
-    body = body[2:]
-    return par, data[length:]
+    type = ord(data[0])&0x7f
+    if type != Parameter_struct['TagSeenCount']['type']:
+        return par, data
+    data = data[1:]
+    (TagCount,) = struct.unpack('!H',data[0:2])
+    par['TagCount'] = TagCount
+    data = data[2:]
+    return par, data
 
 def decode_AccessSpecID(data):
     par = {}
 
     if len(data) == 0:
         return None, data
-    type, length = struct.unpack("!HH", data[0:4])
-
-    if type != Parameter_struct["AccessSpecID"]["type"]:
-        return None, data
-
-    body = data[4:length]
-    (AccessSpecID,) = struct.unpack("!I", body[0:4])
-    par["AccessSpecID"] = AccessSpecID
-    body = body[4:]
-    return par, data[length:]
+    type = ord(data[0])&0x7f
+    if type != Parameter_struct['AccessSpecID']['type']:
+        return par, data
+    data = data[1:]
+    (AccessSpecID,) = struct.unpack('!I',data[0:4])
+    par['AccessSpecID'] = AccessSpecID
+    data = data[4:]
+    return par, data
 
 def decode_RFSurveyReportData(data):
     par = {}
@@ -3776,16 +3702,14 @@ def decode_OpSpecID(data):
 
     if len(data) == 0:
         return None, data
-    type, length = struct.unpack("!HH", data[0:4])
-
-    if type != Parameter_struct["OpSpecID"]["type"]:
-        return None, data
-
-    body = data[4:length]
-    (OpSpecID,) = struct.unpack("!H", body[0:2])
-    par["OpSpecID"] = OpSpecID
-    body = body[2:]
-    return par, data[length:]
+    type = ord(data[0])&0x7f
+    if type != Parameter_struct['OpSpecID']['type']:
+        return par, data
+    data = data[1:]
+    (OpSpecID,) = struct.unpack('!H',data[0:2])
+    par['OpSpecID'] = OpSpecID
+    data = data[2:]
+    return par, data
 
 def decode_RFSurveyEvent(data):
     par = {}
@@ -4084,10 +4008,9 @@ def decode_C1G2Filter(data):
         return None, data
 
     body = data[4:length]
-    (arrayLen, ) = struct.unpack("!H", body[0:2])
-    body = body[2:]
-    par["T"] = body[0:arrayLen*1]
-    body = body[arrayLen*1:]
+    (e,) = struct.unpack("!B", body[0:1])
+    par["T"] = (e>>6)&3
+    body = body[1:]
     ret, body = decode("C1G2TagInventoryMask")(body)
     if ret:
         par["C1G2TagInventoryMask"] = ret
@@ -4112,14 +4035,14 @@ def decode_C1G2TagInventoryMask(data):
         return None, data
 
     body = data[4:length]
-    (arrayLen, ) = struct.unpack("!H", body[0:2])
-    body = body[2:]
-    par["MB"] = body[0:arrayLen*1]
-    body = body[arrayLen*1:]
+    (e,) = struct.unpack("!B", body[0:1])
+    par["MB"] = (e>>6)&3
+    body = body[1:]
     (Pointer,) = struct.unpack("!H", body[0:2])
     par["Pointer"] = Pointer
     body = body[2:]
     (bitArrayLen, ) = struct.unpack("!H", body[0:2])
+    par["TagMask"] = {}
     par["TagMask"]["BitLen"] = bitArrayLen
     body = body[2:]
     if (bitArrayLen%8) == 0:
@@ -4195,10 +4118,9 @@ def decode_C1G2SingulationControl(data):
         return None, data
 
     body = data[4:length]
-    (arrayLen, ) = struct.unpack("!H", body[0:2])
-    body = body[2:]
-    par["Session"] = body[0:arrayLen*1]
-    body = body[arrayLen*1:]
+    (e,) = struct.unpack("!B", body[0:1])
+    par["Session"] = (e>>6)&3
+    body = body[1:]
     (TagPopulation,) = struct.unpack("!H", body[0:2])
     par["TagPopulation"] = TagPopulation
     body = body[2:]
@@ -4258,17 +4180,15 @@ def decode_C1G2TargetTag(data):
         return None, data
 
     body = data[4:length]
-    (arrayLen, ) = struct.unpack("!H", body[0:2])
-    body = body[2:]
-    par["MB"] = body[0:arrayLen*1]
-    body = body[arrayLen*1:]
     (e,) = struct.unpack("!B", body[0:1])
-    par["Match"] = (e>>7)&1
+    par["MB"] = (e>>6)&3
+    par["Match"] = (e>>5)&1
     body = body[1:]
     (Pointer,) = struct.unpack("!H", body[0:2])
     par["Pointer"] = Pointer
     body = body[2:]
     (bitArrayLen, ) = struct.unpack("!H", body[0:2])
+    par["TagMask"] = {}
     par["TagMask"]["BitLen"] = bitArrayLen
     body = body[2:]
     if (bitArrayLen%8) == 0:
@@ -4278,6 +4198,7 @@ def decode_C1G2TargetTag(data):
     par["TagMask"]["Data"] = body[0:bitArrayLen]
     body = body[bitArrayLen:]
     (bitArrayLen, ) = struct.unpack("!H", body[0:2])
+    par["TagData"] = {}
     par["TagData"]["BitLen"] = bitArrayLen
     body = body[2:]
     if (bitArrayLen%8) == 0:
@@ -4305,10 +4226,9 @@ def decode_C1G2Read(data):
     (AccessPassword,) = struct.unpack("!I", body[0:4])
     par["AccessPassword"] = AccessPassword
     body = body[4:]
-    (arrayLen, ) = struct.unpack("!H", body[0:2])
-    body = body[2:]
-    par["MB"] = body[0:arrayLen*1]
-    body = body[arrayLen*1:]
+    (e,) = struct.unpack("!B", body[0:1])
+    par["MB"] = (e>>6)&3
+    body = body[1:]
     (WordPointer,) = struct.unpack("!H", body[0:2])
     par["WordPointer"] = WordPointer
     body = body[2:]
@@ -4334,10 +4254,9 @@ def decode_C1G2Write(data):
     (AccessPassword,) = struct.unpack("!I", body[0:4])
     par["AccessPassword"] = AccessPassword
     body = body[4:]
-    (arrayLen, ) = struct.unpack("!H", body[0:2])
-    body = body[2:]
-    par["MB"] = body[0:arrayLen*1]
-    body = body[arrayLen*1:]
+    (e,) = struct.unpack("!B", body[0:1])
+    par["MB"] = (e>>6)&3
+    body = body[1:]
     (WordPointer,) = struct.unpack("!H", body[0:2])
     par["WordPointer"] = WordPointer
     body = body[2:]
@@ -4428,10 +4347,9 @@ def decode_C1G2BlockErase(data):
     (AccessPassword,) = struct.unpack("!I", body[0:4])
     par["AccessPassword"] = AccessPassword
     body = body[4:]
-    (arrayLen, ) = struct.unpack("!H", body[0:2])
-    body = body[2:]
-    par["MB"] = body[0:arrayLen*1]
-    body = body[arrayLen*1:]
+    (e,) = struct.unpack("!B", body[0:1])
+    par["MB"] = (e>>6)&3
+    body = body[1:]
     (WordPointer,) = struct.unpack("!H", body[0:2])
     par["WordPointer"] = WordPointer
     body = body[2:]
@@ -4457,10 +4375,9 @@ def decode_C1G2BlockWrite(data):
     (AccessPassword,) = struct.unpack("!I", body[0:4])
     par["AccessPassword"] = AccessPassword
     body = body[4:]
-    (arrayLen, ) = struct.unpack("!H", body[0:2])
-    body = body[2:]
-    par["MB"] = body[0:arrayLen*1]
-    body = body[arrayLen*1:]
+    (e,) = struct.unpack("!B", body[0:1])
+    par["MB"] = (e>>6)&3
+    body = body[1:]
     (WordPointer,) = struct.unpack("!H", body[0:2])
     par["WordPointer"] = WordPointer
     body = body[2:]
@@ -4492,51 +4409,45 @@ def decode_C1G2_PC(data):
 
     if len(data) == 0:
         return None, data
-    type, length = struct.unpack("!HH", data[0:4])
-
-    if type != Parameter_struct["C1G2_PC"]["type"]:
-        return None, data
-
-    body = data[4:length]
-    (PC_Bits,) = struct.unpack("!H", body[0:2])
-    par["PC_Bits"] = PC_Bits
-    body = body[2:]
-    return par, data[length:]
+    type = ord(data[0])&0x7f
+    if type != Parameter_struct['C1G2_PC']['type']:
+        return par, data
+    data = data[1:]
+    (PC_Bits,) = struct.unpack('!H',data[0:2])
+    par['PC_Bits'] = PC_Bits
+    data = data[2:]
+    return par, data
 
 def decode_C1G2_CRC(data):
     par = {}
 
     if len(data) == 0:
         return None, data
-    type, length = struct.unpack("!HH", data[0:4])
-
-    if type != Parameter_struct["C1G2_CRC"]["type"]:
-        return None, data
-
-    body = data[4:length]
-    (CRC,) = struct.unpack("!H", body[0:2])
-    par["CRC"] = CRC
-    body = body[2:]
-    return par, data[length:]
+    type = ord(data[0])&0x7f
+    if type != Parameter_struct['C1G2_CRC']['type']:
+        return par, data
+    data = data[1:]
+    (CRC,) = struct.unpack('!H',data[0:2])
+    par['CRC'] = CRC
+    data = data[2:]
+    return par, data
 
 def decode_C1G2SingulationDetails(data):
     par = {}
 
     if len(data) == 0:
         return None, data
-    type, length = struct.unpack("!HH", data[0:4])
-
-    if type != Parameter_struct["C1G2SingulationDetails"]["type"]:
-        return None, data
-
-    body = data[4:length]
-    (NumCollisionSlots,) = struct.unpack("!H", body[0:2])
-    par["NumCollisionSlots"] = NumCollisionSlots
-    body = body[2:]
-    (NumEmptySlots,) = struct.unpack("!H", body[0:2])
-    par["NumEmptySlots"] = NumEmptySlots
-    body = body[2:]
-    return par, data[length:]
+    type = ord(data[0])&0x7f
+    if type != Parameter_struct['C1G2SingulationDetails']['type']:
+        return par, data
+    data = data[1:]
+    (NumCollisionSlots,) = struct.unpack('!H',data[0:2])
+    par['NumCollisionSlots'] = NumCollisionSlots
+    data = data[2:]
+    (NumEmptySlots,) = struct.unpack('!H',data[0:2])
+    par['NumEmptySlots'] = NumEmptySlots
+    data = data[2:]
+    return par, data
 
 def decode_C1G2ReadOpSpecResult(data):
     par = {}

@@ -131,6 +131,30 @@ def decodeParameterDefinition(paraDef):
     return result
 
 
+def decodeTVEncodingParameterDefinition(paraDef):
+    elementList = elementOfChildNodes(paraDef.childNodes)
+    paraName = paraDef.getAttribute("name")
+    result = ''
+    result += "type = ord(data[0])&0x7f\n    "
+    result += "if type != Parameter_struct['"  + paraName + "']['type']:\n    "
+    result += "    return par, data\n    "
+    result += "data = data[1:]\n    "
+    for element in elementList:
+        if element.tagName == "field":
+            name = element.getAttribute("name")
+            typeName = element.getAttribute("type")
+            if typeName != "u96":                
+                packStr = typeToPackStr(typeName)
+                packLen = typeToPackLen(typeName) 
+                result += "(" + name + ",) = struct.unpack('" + packStr + "'," +  "data[0:" +  str(packLen) + "])\n    "
+                result += "par['" + name + "'] = " + name + "\n    "
+                result += "data = data[" + str(packLen) + ":]\n    "
+            else:
+                result += "par['" + name + "'] = data[0:12]\n    "
+                result += "data = data[" + str(12) + ":]\n    "
+    result += 'return par, data\n\n'
+    return result
+
 def decodeElementList(elementList):
     if elementList[0].tagName == "field":
         return decodeFieldOfList(elementList)
@@ -146,7 +170,7 @@ def decodeFieldOfList(elementList):
     typeName = elementList[0].getAttribute("type")
     if typeName in ['u8', 'u16', 'u32', 'u64', 's8', 's16', 's32', 's64']:
         return decodeNomalFieldOfList(elementList)
-    elif typeName == 'u1':
+    elif typeName == 'u1' or typeName == 'u2':
         return decodeBitFieldOfList(elementList)
     else:
         return decodeArrayFieldOfList(elementList)
@@ -175,22 +199,33 @@ def decodeBitFieldOfList(elementList):
     for ele in elementList:
         if ele.getAttribute("type") == "u1":
             numOfBits += 1
+        elif ele.getAttribute("type") == "u2":
+            numOfBits += 2
         else:
             break
     numOfBytes = numOfBits / 8
     if numOfBits % 8 != 0:
         numOfBytes += 1
     i = 0
+    j = 0
     for b in range(numOfBytes):
         if i > numOfBits:
             break
         seg = '(e,) = struct.unpack("!B", body[0:1])\n    '
-        for x in range(8):
+        x = 0
+        while x < 8:
             i = b * 8 + x
             if i >= numOfBits:
                 break
-            seg += 'par["' + elementList[i].getAttribute(
+            if elementList[j].getAttribute("type") == "u2":
+                x += 1
+                seg += 'par["' + elementList[j].getAttribute(
+                "name") + '"] = (e>>' + str(7 - x) + ")&3\n    "
+            else:
+                seg += 'par["' + elementList[j].getAttribute(
                 "name") + '"] = (e>>' + str(7 - x) + ")&1\n    "
+            j += 1
+            x += 1
         result += seg + "body = body[1:]\n    "
     return result, elementList[numOfBits:]
 
@@ -208,6 +243,7 @@ def decodeArrayFieldOfList(elementList):
 def decodeBitArrayFieldOfList(elementList):
     name = elementList[0].getAttribute("name")
     result = '(bitArrayLen, ) = struct.unpack("!H", body[0:2])\n    '
+    result += 'par["' + name + '"] = {}\n    '
     result += 'par["' + name + '"]["BitLen"] = bitArrayLen\n    '
     result += "body = body[2:]\n    "
     result += "if (bitArrayLen%8) == 0:\n        "
@@ -363,8 +399,10 @@ def encodeFieldOfList(elementList):
     typeName = elementList[0].getAttribute("type")
     if typeName in ['u8', 'u16', 'u32', 'u64', 's8', 's16', 's32', 's64']:
         return encodeNomalFieldOfList(elementList)
-    elif typeName == 'u1':
+    elif typeName == 'u1' or typeName == 'u2':
         return encodeBitFieldOfList(elementList)
+    elif typeName == 'u96':
+        return encodeEpc96FieldOfList(elementList)
     else:
         return encodeArrayFieldOfList(elementList)
 
@@ -375,30 +413,45 @@ def encodeBitFieldOfList(elementList):
     for ele in elementList:
         if ele.getAttribute("type") == "u1":
             numOfBits += 1
+        elif ele.getAttribute("type") == "u2":
+            numOfBits += 2
         else:
             break
     numOfBytes = numOfBits / 8
     if numOfBits % 8 != 0:
         numOfBytes += 1
     i = 0
+    j = 0
     for b in range(numOfBytes):
         if i > numOfBits:
             break
         seg = 'e = '
-        for x in range(8):
+        x = 0        
+        while x < 8:
             i = b * 8 + x
             if i >= numOfBits:
                 break
-            if elementList[i].getAttribute("enumeration"):
-                seg += elementList[i].getAttribute("enumeration") + '_Name2Type[par["' + elementList[
-                    i].getAttribute("name") + '"]]' + '<<' + str(7 - x) + '|'
+            if elementList[j].getAttribute("type") == "u2":
+                x += 1
+            if elementList[j].getAttribute("enumeration"):
+                seg += elementList[j].getAttribute("enumeration") + '_Name2Type[par["' + elementList[
+                    j].getAttribute("name") + '"]]' + '<<' + str(7 - x) + '|'
             else:
-                seg += 'par["' + elementList[i].getAttribute(
+                seg += 'par["' + elementList[j].getAttribute(
                     "name") + '"]' + '<<' + str(7 - x) + '|'
+            x += 1
+            j += 1
         result += seg + "0\n    "
         result += 'data += struct.pack("!B", e)\n    '
 
     return result, elementList[numOfBits:]
+
+def encodeEpc96FieldOfList(elementList):
+    result = ""
+    return result
+
+
+
 
 
 def encodeArrayFieldOfList(elementList):
@@ -495,19 +548,42 @@ def encodeParameterDefinition(paraDef):
         result += data
     return result
 
+def encodeTvEncodingParameterDefinition(paraDef):
+    result = ''
+    typeNum = paraDef.getAttribute("typeNum")
+    result += "data += " + "chr(" +  str(int(typeNum)|0x80) + ")\n    "
+    elementList = elementOfChildNodes(paraDef.childNodes)
+    for element in elementList:
+        if element.tagName == "field":            
+            typeName = element.getAttribute("type")
+            if typeName == "u96":
+                name = element.getAttribute("name")
+                result += "data += par['" + name + "']\n    "
+            else:
+                packStr = typeToPackStr(typeName)
+                name = element.getAttribute("name")
+                result += "data += struct.pack('" + packStr + "', par['" + name + "'])\n    "
+    result += "return data"
+    result += "\n\n"
+    return result
+
 
 def EncodeParameterFuncs(paraDefList):
     s = ""
     for paraDef in paraDefList:
         s += "def encode_" + paraDef.getAttribute("name") + "(par):\n    "
         s += "data = ''\n    "
-        s += encodeParameterDefinition(paraDef)
-        #s += "msgheader = '!HH'\n    "
-        #s += "megheaderLen = 4\n    "
-        s += "type = Parameter_struct['" + \
-            paraDef.getAttribute("name") + "']['type']\n    "
-        s += "data = struct.pack('!HH', type, (4+len(data))) + data\n    "
-        s += 'return data\n\n'
+        typeNum = paraDef.getAttribute("typeNum")
+        if int(typeNum) >= 128:
+            s += encodeParameterDefinition(paraDef)
+            #s += "msgheader = '!HH'\n    "
+            #s += "megheaderLen = 4\n    "
+            s += "type = Parameter_struct['" + \
+                paraDef.getAttribute("name") + "']['type']\n    "
+            s += "data = struct.pack('!HH', type, (4+len(data))) + data\n    "
+            s += 'return data\n\n'
+        else:
+            s += encodeTvEncodingParameterDefinition(paraDef)
     return s
 
 
@@ -530,13 +606,17 @@ def DecodeParameterFuncs(paraDefList):
         s += 'par = {}\n\n    '
         s += 'if len(data) == 0:\n        '
         s += 'return None, data\n    '
-        s += 'type, length = struct.unpack("!HH", data[0:4])\n\n    '
-        s += 'if type != Parameter_struct["' + \
-            paraDef.getAttribute("name") + '"]["type"]:\n        '
-        s += 'return None, data\n\n    '
-        s += 'body = data[4:length]\n    '
-        s += decodeParameterDefinition(paraDef)
-        s += 'return par, data[length:]\n\n'
+        typeNum = paraDef.getAttribute("typeNum")
+        if int(typeNum) >= 128:
+            s += 'type, length = struct.unpack("!HH", data[0:4])\n\n    '
+            s += 'if type != Parameter_struct["' + \
+                paraDef.getAttribute("name") + '"]["type"]:\n        '
+            s += 'return None, data\n\n    '
+            s += 'body = data[4:length]\n    '
+            s += decodeParameterDefinition(paraDef)
+            s += 'return par, data[length:]\n\n'
+        else:
+            s += decodeTVEncodingParameterDefinition(paraDef)        
     return s
 
 
